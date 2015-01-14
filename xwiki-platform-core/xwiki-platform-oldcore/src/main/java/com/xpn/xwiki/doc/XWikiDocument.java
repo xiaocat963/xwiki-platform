@@ -118,6 +118,7 @@ import org.xwiki.rendering.renderer.printer.DefaultWikiPrinter;
 import org.xwiki.rendering.renderer.printer.WikiPrinter;
 import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.rendering.syntax.SyntaxFactory;
+import org.xwiki.rendering.transformation.RenderingContext;
 import org.xwiki.rendering.transformation.TransformationContext;
 import org.xwiki.rendering.transformation.TransformationException;
 import org.xwiki.rendering.transformation.TransformationManager;
@@ -144,6 +145,7 @@ import com.xpn.xwiki.doc.merge.MergeResult;
 import com.xpn.xwiki.doc.rcs.XWikiRCSNodeInfo;
 import com.xpn.xwiki.internal.AbstractNotifyOnUpdateList;
 import com.xpn.xwiki.internal.cache.rendering.RenderingCache;
+import com.xpn.xwiki.internal.display.SyntaxConfiguration;
 import com.xpn.xwiki.internal.merge.MergeUtils;
 import com.xpn.xwiki.internal.xml.DOMXMLWriter;
 import com.xpn.xwiki.internal.xml.XMLWriter;
@@ -1111,7 +1113,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
 
     public String getRenderedContent(XWikiContext context) throws XWikiException
     {
-        return getRenderedContent(Syntax.XHTML_1_0, context);
+        return getRenderedContent(Utils.getComponent(SyntaxConfiguration.class).getDefaultHTMLSyntax(), context);
     }
 
     /**
@@ -1123,7 +1125,8 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
      */
     public String getRenderedContent(String text, String syntaxId, XWikiContext context)
     {
-        return getRenderedContent(text, syntaxId, Syntax.XHTML_1_0.toIdString(), context);
+        return getRenderedContent(text, syntaxId,
+            Utils.getComponent(SyntaxConfiguration.class).getDefaultHTMLSyntax().toIdString(), context);
     }
 
     /**
@@ -1137,8 +1140,9 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
     public String getRenderedContent(String text, String syntaxId, boolean restrictedTransformationContext,
         XWikiContext context)
     {
-        return getRenderedContent(text, syntaxId, Syntax.XHTML_1_0.toIdString(), restrictedTransformationContext,
-            context);
+        return getRenderedContent(text, syntaxId,
+            Utils.getComponent(SyntaxConfiguration.class).getDefaultHTMLSyntax().toIdString(),
+                restrictedTransformationContext, context);
     }
 
     /**
@@ -1403,6 +1407,19 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             LOGGER.error("Failed to render title for [{}]", getDocumentReference(), e);
             return getDocumentReference().getName();
         }
+    }
+
+    /**
+     * Get the rendered version of the document title. If the title is not specified then an attempt is made to extract
+     * the title from the document content. If this fails then the document name is used as title. The Velocity code
+     * from the title is evaluated if the title is specified or if it is extracted from the document content.
+     *
+     * @param context the XWiki context
+     * @return the rendered version of the document title
+     */
+    public String getRenderedTitle(XWikiContext context)
+    {
+        return getRenderedTitle(Utils.getComponent(SyntaxConfiguration.class).getDefaultHTMLSyntax(), context);
     }
 
     public void setTitle(String title)

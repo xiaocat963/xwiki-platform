@@ -134,6 +134,7 @@ import org.xwiki.query.QueryFilter;
 import org.xwiki.rendering.parser.ParseException;
 import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.rendering.syntax.SyntaxFactory;
+import org.xwiki.rendering.transformation.RenderingContext;
 import org.xwiki.resource.ResourceReference;
 import org.xwiki.resource.ResourceReferenceManager;
 import org.xwiki.resource.ResourceReferenceResolver;
@@ -3467,7 +3468,8 @@ public class XWiki implements EventListener
         context.put("idoc", includingDoc);
         context.put("sdoc", includedDoc);
         try {
-            result = includedDoc.getRenderedContent(Syntax.XHTML_1_0, false, context);
+            result = includedDoc.getRenderedContent(Utils.getComponent(RenderingContext.class).getTargetSyntax(), false,
+                context);
         } finally {
             // Remove including doc or set the previous one
             if (idoc == null) {
