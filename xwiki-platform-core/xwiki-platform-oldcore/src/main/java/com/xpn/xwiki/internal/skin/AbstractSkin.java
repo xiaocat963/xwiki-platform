@@ -22,6 +22,7 @@ package com.xpn.xwiki.internal.skin;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.skin.Resource;
 import org.xwiki.skin.ResourceRepository;
 import org.xwiki.skin.Skin;
@@ -54,6 +55,12 @@ public abstract class AbstractSkin implements Skin
 
         @Override
         public String getId()
+        {
+            return null;
+        }
+
+        @Override
+        public Syntax getHTMLRenderingSyntax()
         {
             return null;
         }

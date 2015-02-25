@@ -19,6 +19,8 @@
  */
 package com.xpn.xwiki.internal.skin;
 
+import org.apache.commons.lang3.StringUtils;
+import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.skin.Resource;
 import org.xwiki.skin.Skin;
 
@@ -30,7 +32,8 @@ public class WikiSkin extends AbstractSkin
 {
     private WikiSkinUtils utils;
 
-    public WikiSkin(String id, InternalSkinManager skinManager, InternalSkinConfiguration configuration, WikiSkinUtils utils)
+    public WikiSkin(String id, InternalSkinManager skinManager, InternalSkinConfiguration configuration, 
+            WikiSkinUtils utils)
     {
         super(id, skinManager, configuration);
         this.utils = utils;
@@ -46,5 +49,18 @@ public class WikiSkin extends AbstractSkin
     public Resource<?> getLocalResource(String resourceName)
     {
         return this.utils.getResource(resourceName, this);
+    }
+
+    @Override
+    public Syntax getHTMLRenderingSyntax()
+    {
+        String renderingSyntax = utils.getSkinProperty(id, "html.syntax");
+        if (StringUtils.isNotEmpty(renderingSyntax)) {
+            Syntax syntax = this.skinManager.parseSyntax(this, renderingSyntax, false);
+            if (syntax != null) {
+                return syntax;
+            }
+        }
+        return getParent().getHTMLRenderingSyntax();
     }
 }

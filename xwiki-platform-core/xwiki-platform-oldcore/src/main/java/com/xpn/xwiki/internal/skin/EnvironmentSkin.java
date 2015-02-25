@@ -32,6 +32,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xwiki.environment.Environment;
+import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.skin.Resource;
 import org.xwiki.skin.Skin;
 
@@ -145,5 +146,11 @@ public class EnvironmentSkin extends AbstractSkin
         }
 
         return resourcePath;
+    }
+
+    @Override
+    public Syntax getHTMLRenderingSyntax()
+    {                
+        return this.skinManager.parseSyntax(this, getProperties().getString("html.syntax"), true);
     }
 }
