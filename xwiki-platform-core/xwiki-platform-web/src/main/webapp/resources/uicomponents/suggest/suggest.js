@@ -49,6 +49,9 @@ var XWiki = (function(XWiki){
     resultIcon: "icon",
     // The name of the JSON parameter or XML attribute holding a potential result hint (displayed next to the value).
     resultHint: "hint",
+    // The name of the JSON field or XML attribute holding the result type. The value of the specified field/attribute is
+    // used as a CSS class name. This is useful if you need to style suggestions differently based on some property.
+    resultType: "type",
     // The id of the element that will hold the suggest element
     parentContainer : "body",
     // Should results fragments be highlighted when matching typed input
@@ -80,7 +83,7 @@ var XWiki = (function(XWiki){
   },
   sInput : "",
   nInputChars : 0,
-  aSuggestions : [],
+  aSuggestions : {},
   iHighlighted : null,
   isActive : false,
 
@@ -219,10 +222,10 @@ var XWiki = (function(XWiki){
 
     switch(key) {
       case Event.KEY_RETURN:
-        if (!this.iHighlighted && this.aSuggestions.length == 1) {
+        if (!this.iHighlighted && (Object.keys(this.aSuggestions).length == 1 && this.aSuggestions[Object.keys(this.aSuggestions)[0]].length == 1)) {
           this.highlightFirst();
         }
-        this.setHighlightedValue();
+        this.setHighlightedValue(event);
         break;
       case Event.KEY_ESC:
         this.clearSuggestions();
@@ -268,20 +271,39 @@ var XWiki = (function(XWiki){
     // if caching enabled, and user is typing (ie. length of input is increasing)
     // filter results out of aSuggestions from last request
     //
-    if (val.length>this.nInputChars && this.aSuggestions.length && this.options.cache)
+    if (val.length>this.nInputChars && Object.keys(this.aSuggestions).length && this.options.cache)
     {
-      var arr = [];
-      for (var i=0;i<this.aSuggestions.length;i++) {
-        if (this.aSuggestions[i].value.substr(0,val.length).toLowerCase() == val) {
-          arr.push( this.aSuggestions[i] );
+      var filteredSuggestions = {};
+      for (var i=0; i < Object.keys(this.aSuggestions).length; i++) {
+        var sourceId = Object.keys(this.aSuggestions)[i];
+        var filteredSourceSuggestions = [];
+        for (var j=0; j<this.aSuggestions[sourceId].length; j++) {
+          var existingSuggestion = this.aSuggestions[sourceId][j];
+          // Note: This is assuming that all suggestions are prefixed with the value. Does not apply in all cases, so
+          // the use of options.cache is limited to only those scenarios.
+          if (existingSuggestion.value.substr(0, val.length).toLowerCase() == val) {
+            filteredSourceSuggestions.push(existingSuggestion);
+          }
+        }
+
+        // Only set this source if it has at least one suggestion.
+        if (filteredSourceSuggestions.length) {
+          filteredSuggestions[sourceId] = sourceSuggestions;
         }
       }
 
       this.sInput = val;
       this.nInputChars = val.length;
-      this.aSuggestions = arr;
+      this.aSuggestions = filteredSuggestions;
 
-      this.createList(this.aSuggestions);
+      // Display the just filtered suggestions.
+      for (var i=0; i < sources.length; i++) {
+        var source = sources[i];
+        var sourceSuggestions = this.aSuggestions[source.id];
+        if (sourceSuggestions) {
+          this.createList(sourceSuggestions, source);
+        }
+      }
 
       return false;
     } else  {
@@ -320,8 +342,8 @@ var XWiki = (function(XWiki){
         this.fld.addClassName('loading');
         source.script(this.fld.value.strip(), function(suggestions) {
           if (requestId == this.latestRequest) {
-            this.aSuggestions = suggestions || [];
-            suggestions && this.createList(this.aSuggestions, source);
+            this.aSuggestions[source.id] = suggestions || [];
+            suggestions && this.createList(this.aSuggestions[source.id], source);
             this.fld.removeClassName('loading');
           }
         }.bind(this));
@@ -383,8 +405,14 @@ var XWiki = (function(XWiki){
     }
 
     var suggestions = this.parseResponse(req, source);
-    this.aSuggestions = suggestions || [];
-    suggestions && this.createList(this.aSuggestions, source);
+    this.aSuggestions[source.id] = suggestions || [];
+    suggestions && this.createList(this.aSuggestions[source.id], source);
+  },
+
+  _getNestedProperty: function(obj, path) {
+    var properties = path.split('.');
+    while (properties.length && (obj = obj[properties.shift()]));
+    return properties.length > 0 ? null : obj;
   },
 
   /**
@@ -397,14 +425,20 @@ var XWiki = (function(XWiki){
       if (!jsondata) {
         return null;
       }
-      var results = jsondata[source.resultsParameter || this.options.resultsParameter];
+      if (Object.isArray(jsondata)) {
+        var results = jsondata;
+      } else {
+        var results = this._getNestedProperty(jsondata, source.resultsParameter || this.options.resultsParameter);
+      }
       for (var i = 0; i < results.length; i++) {
+        var result = results[i];
         suggestions.push({
-           'id': results[i][source.resultId || this.options.resultId],
-           'value': results[i][source.resultValue || this.options.resultValue],
-           'info': results[i][source.resultInfo || this.options.resultInfo],
-           'icon' : results[i][source.resultIcon || this.options.resultIcon],
-           'hint' : results[i][source.resultHint || this.options.resultHint]
+          'id': this._getNestedProperty(result, source.resultId || this.options.resultId),
+          'value': this._getNestedProperty(result, source.resultValue || this.options.resultValue),
+          'info': this._getNestedProperty(result, source.resultInfo || this.options.resultInfo),
+          'icon' : this._getNestedProperty(result, source.resultIcon || this.options.resultIcon),
+          'hint' : this._getNestedProperty(result, source.resultHint || this.options.resultHint),
+          'type' : this._getNestedProperty(result, source.resultType || this.options.resultType)
         });
       }
     } else {
@@ -416,10 +450,11 @@ var XWiki = (function(XWiki){
         if (results[i].hasChildNodes()) {
           suggestions.push({
             'id': results[i].getAttribute('id'),
-            'value':results[i].childNodes[0].nodeValue,
-            'info':results[i].getAttribute('info'),
-            'icon':results[i].getAttribute('icon'),
-            'hint':results[i].getAttribute('hint')
+            'value': results[i].childNodes[0].nodeValue,
+            'info': results[i].getAttribute('info'),
+            'icon': results[i].getAttribute('icon'),
+            'hint': results[i].getAttribute('hint'),
+            'type': results[i].getAttribute('type')
           });
         }
       }
@@ -496,7 +531,7 @@ var XWiki = (function(XWiki){
       for (var i=0;i<this.sources.length;i++) {
 
         var source = this.sources[i];
-        source.id = i
+        source.id = source.id || i;
 
         if(this.resultContainer.down('.results' + source.id)) {
           // If the sub-container for this source is already present, we just re-initialize it :
@@ -645,7 +680,7 @@ var XWiki = (function(XWiki){
        icon: this.options.icon,
        classes: 'suggestList',
        eventListeners: {
-          'click' : function () { pointer.setHighlightedValue(); return false; },
+          'click' : function (event) { pointer.setHighlightedValue(event); return false; },
           'mouseover' : function () { pointer.setHighlight( this.getElement() ); }
        }
     });
@@ -664,7 +699,7 @@ var XWiki = (function(XWiki){
             .insert(new Element('span', {'class':'suggestInfo'}).update(escapeHTML(arr[i].info)));
 
       var item = new XWiki.widgets.XListItem( this.createItemDisplay(arr[i], source) , {
-        containerClasses: 'suggestItem',
+        containerClasses: 'suggestItem ' + (arr[i].type || ''),
         value: valueNode,
         noHighlight: true // we do the highlighting ourselves
       });
@@ -715,8 +750,14 @@ var XWiki = (function(XWiki){
     }
     // If the search result contains an icon information, we insert this icon in the result entry.
     if (data.icon) {
-      var iconImage = new Element("img", {'src' : data.icon, 'class' : 'icon' });
-      displayNode.insert({top: iconImage});
+      if (data.icon.indexOf('.') >= 0 || data.icon.indexOf('/') >= 0) {
+        // The icon is specified as a file path.
+        var iconElement = new Element('img', {'src': data.icon, 'class': 'icon'});
+      } else {
+        // The icon is specified as a CSS class name.
+        var iconElement = new Element('i', {'class': 'icon ' + data.icon});
+      }
+      displayNode.insert({top: iconElement});
     }
     return displayNode;
   },
@@ -885,7 +926,7 @@ var XWiki = (function(XWiki){
     return this.iHighlighted;
   },
 
-  setHighlightedValue: function ()
+  setHighlightedValue: function (event)
   {
     if (this.iHighlighted && !this.iHighlighted.hasClassName('noSuggestion'))
     {
@@ -898,7 +939,8 @@ var XWiki = (function(XWiki){
         'id': text(this.iHighlighted.down(".suggestId")),
         'value': text(this.iHighlighted.down(".suggestValue")),
         'info': text(this.iHighlighted.down(".suggestInfo")),
-        'icon' : icon ? icon.src : ''
+        'icon' : icon ? icon.src : '',
+        'originalEvent' : event
       }
 
       var selection, newFieldValue;

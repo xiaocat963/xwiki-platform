@@ -46,8 +46,7 @@ import static org.junit.Assert.assertTrue;
 public class FlamingoThemeTest extends AbstractTest
 {
     @Rule
-    public SuperAdminAuthenticationRule superAdminAuthenticationRule =
-            new SuperAdminAuthenticationRule(getUtil(), getDriver());
+    public SuperAdminAuthenticationRule superAdminAuthenticationRule = new SuperAdminAuthenticationRule(getUtil());
     @Test
     public void editFlamingoTheme() throws Exception
     {
@@ -64,7 +63,15 @@ public class FlamingoThemeTest extends AbstractTest
         presentationAdministrationSectionPage.clickOnCustomize();
         EditThemePage editThemePage = new EditThemePage();
 
+        // Wait for the preview to be fully loaded
+        assertTrue(editThemePage.isPreviewBoxLoading());
+        editThemePage.waitUntilPreviewIsLoaded();
+        // First, disable auto refresh because it slows down the test
+        // (and can even make it fails if the computer is slow)
+        editThemePage.setAutoRefresh(false);
+
         verifyAllVariablesCategoriesArePresent(editThemePage);
+        verifyVariablesCategoriesDoesNotDisappear(editThemePage);
         verifyThatPreviewWorks(editThemePage);
 
         // We do not have a way top clear the browser's cache with selenium
@@ -88,17 +95,24 @@ public class FlamingoThemeTest extends AbstractTest
         assertTrue(categories.contains("Advanced"));
     }
 
+    private void verifyVariablesCategoriesDoesNotDisappear(EditThemePage editThemePage) throws Exception
+    {
+        // Because of an incompatibility between PrototypeJS and Bootstrap, the variables categories can disappear
+        // (see: http://jira.xwiki.org/browse/XWIKI-11670).
+        // This test verifies that the bug is still fixed.
+        assertEquals(10, editThemePage.getVariableCategories().size());
+        // We click on different categories
+        editThemePage.selectVariableCategory("Base colors");
+        editThemePage.selectVariableCategory("Typography");
+        // We verify that they are still there
+        assertEquals(10, editThemePage.getVariableCategories().size());
+    }
+
     /**
      * @since 6.3M2
      */
     private void verifyThatPreviewWorks(EditThemePage editThemePage) throws Exception
     {
-        // Wait for the preview to be fully loaded
-        assertTrue(editThemePage.isPreviewBoxLoading());
-        editThemePage.waitUntilPreviewIsLoaded();
-        // First, disable auto refresh because it slows down the test
-        // (and can even make it fails if the computer is slow)
-        editThemePage.setAutoRefresh(false);
         // Verify that the preview is working with the current values
         PreviewBox previewBox = editThemePage.getPreviewBox();
         assertFalse(previewBox.hasError());
@@ -168,7 +182,7 @@ public class FlamingoThemeTest extends AbstractTest
         assertEquals("Test", themeApplicationWebHomePage.getCurrentTheme());
         // Look at the values
         assertEquals("rgba(255, 0, 0, 1)", themeApplicationWebHomePage.getPageBackgroundColor());
-        assertEquals("\"Monospace\"", themeApplicationWebHomePage.getFontFamily());
+        assertEquals("monospace", themeApplicationWebHomePage.getFontFamily().toLowerCase());
         // Test 'lessCode' is correctly handled
         assertEquals("rgba(0, 0, 255, 1)", themeApplicationWebHomePage.getTextColor());
 

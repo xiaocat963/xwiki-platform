@@ -43,8 +43,7 @@ public class PreviewBox extends CSSGetterPage
     {
         try {
             getDriver().switchTo().frame("iframe");
-            TestUtils utils = new TestUtils();
-            List<WebElement> errors = utils.findElementsWithoutWaiting(getDriver(), By.className("less-error-message"));
+            List<WebElement> errors = getDriver().findElementsWithoutWaiting(By.className("less-error-message"));
             return !errors.isEmpty();
         } finally {
             getDriver().switchTo().defaultContent();

@@ -27,8 +27,6 @@ import org.xwiki.cache.CacheFactory;
 import org.xwiki.cache.CacheManager;
 import org.xwiki.cache.config.CacheConfiguration;
 import org.xwiki.lesscss.colortheme.NamedColorThemeReference;
-import org.xwiki.lesscss.colortheme.NamedColorThemeReference;
-import org.xwiki.lesscss.resources.LESSResourceReferenceSerializer;
 import org.xwiki.lesscss.resources.LESSSkinFileResourceReference;
 import org.xwiki.lesscss.skin.FSSkinReference;
 import org.xwiki.test.mockito.MockitoComponentMockingRule;
@@ -72,7 +70,7 @@ public class DefaultLESSResourcesCacheTest
 
         LESSSkinFileResourceReference lessSkinFileResourceReference = new LESSSkinFileResourceReference("lessResource");
         when(cacheKeyFactory.getCacheKey(eq(lessSkinFileResourceReference), eq(new FSSkinReference("skin")),
-            eq(new NamedColorThemeReference("colorTheme")))).thenReturn("12_lessResource_4_skin_10_colorTheme");
+            eq(new NamedColorThemeReference("colorTheme")), eq(true))).thenReturn("12_lessResource_4_skin_10_colorTheme");
     }
 
     @Test
@@ -118,11 +116,11 @@ public class DefaultLESSResourcesCacheTest
         LESSSkinFileResourceReference file1 = new LESSSkinFileResourceReference("file1");
         LESSSkinFileResourceReference file2 = new LESSSkinFileResourceReference("file2");
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme")))).thenReturn("k1");
+                eq(new NamedColorThemeReference("colorTheme")), eq(true))).thenReturn("k1");
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin2")),
-            eq(new NamedColorThemeReference("colorTheme")))).thenReturn("k3");
+            eq(new NamedColorThemeReference("colorTheme")), eq(true))).thenReturn("k3");
         when(cacheKeyFactory.getCacheKey(eq(file2), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme")))).thenReturn("k4");
+                eq(new NamedColorThemeReference("colorTheme")), eq(true))).thenReturn("k4");
 
         // Add the first one twice
         mocker.getComponentUnderTest().set(new LESSSkinFileResourceReference("file1"), new FSSkinReference("skin1"),
@@ -153,11 +151,11 @@ public class DefaultLESSResourcesCacheTest
         LESSSkinFileResourceReference file2 = new LESSSkinFileResourceReference("file2");
 
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme1")))).thenReturn("k1");
+                eq(new NamedColorThemeReference("colorTheme1")), eq(true))).thenReturn("k1");
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme2")))).thenReturn("k3");
+                eq(new NamedColorThemeReference("colorTheme2")), eq(true))).thenReturn("k3");
         when(cacheKeyFactory.getCacheKey(eq(file2), eq(new FSSkinReference("skin2")),
-                eq(new NamedColorThemeReference("colorTheme1")))).thenReturn("k4");
+                eq(new NamedColorThemeReference("colorTheme1")), eq(true))).thenReturn("k4");
         // Add the first one twice
         mocker.getComponentUnderTest().set(new LESSSkinFileResourceReference("file1"), new FSSkinReference("skin1"),
                 new NamedColorThemeReference("colorTheme1"), "css1");
@@ -187,11 +185,11 @@ public class DefaultLESSResourcesCacheTest
         LESSSkinFileResourceReference file2 = new LESSSkinFileResourceReference("file2");
 
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme1")))).thenReturn("k1");
+                eq(new NamedColorThemeReference("colorTheme1")), eq(true))).thenReturn("k1");
         when(cacheKeyFactory.getCacheKey(eq(file2), eq(new FSSkinReference("skin1")),
-                eq(new NamedColorThemeReference("colorTheme1")))).thenReturn("k3");
+                eq(new NamedColorThemeReference("colorTheme1")), eq(true))).thenReturn("k3");
         when(cacheKeyFactory.getCacheKey(eq(file1), eq(new FSSkinReference("skin2")),
-                eq(new NamedColorThemeReference("colorTheme1")))).thenReturn("k4");
+                eq(new NamedColorThemeReference("colorTheme1")), eq(true))).thenReturn("k4");
 
         // Add the first one twice
         mocker.getComponentUnderTest().set(new LESSSkinFileResourceReference("file1"), new FSSkinReference("skin1"),
