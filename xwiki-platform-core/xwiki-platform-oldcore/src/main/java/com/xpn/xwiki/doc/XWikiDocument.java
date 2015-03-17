@@ -1713,7 +1713,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
 
     public void appendMeta(String meta)
     {
-        StringBuffer buf = new StringBuffer(this.meta);
+        StringBuilder buf = new StringBuilder(this.meta);
         buf.append(meta);
         buf.append("\n");
         this.meta = buf.toString();
@@ -3180,7 +3180,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             return "";
         }
 
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         VelocityContext vcontext = new VelocityContext();
         for (String propertyName : bclass.getPropertyList()) {
             PropertyClass pclass = (PropertyClass) bclass.getField(propertyName);
@@ -3245,7 +3245,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             return "";
         }
 
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append("{table}\n");
         boolean first = true;
         for (String propertyName : bclass.getPropertyList()) {
@@ -4331,7 +4331,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
 
         int length = xmlString.length();
         char character;
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < length; i++) {
             character = xmlString.charAt(i);
             switch (character) {
@@ -6672,7 +6672,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
 
     public String getEditURL(String action, String mode, String language, XWikiContext context)
     {
-        StringBuffer editparams = new StringBuffer();
+        StringBuilder editparams = new StringBuilder();
         if (!mode.equals("")) {
             editparams.append("xpage=");
             editparams.append(mode);
@@ -7602,7 +7602,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
      */
     private String updateDocumentSection10(int sectionNumber, String newSectionContent) throws XWikiException
     {
-        StringBuffer newContent = new StringBuffer();
+        StringBuilder newContent = new StringBuilder();
         // get document section that will be edited
         DocumentSection docSection = getDocumentSection(sectionNumber);
         int numberOfSections = getSections().size();
@@ -7666,7 +7666,7 @@ public class XWikiDocument implements DocumentModelBridge, Cloneable
             md5.update(valueBeforeMD5.getBytes());
 
             byte[] array = md5.digest();
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (byte element : array) {
                 int b = element & 0xFF;
                 if (b < 0x10) {

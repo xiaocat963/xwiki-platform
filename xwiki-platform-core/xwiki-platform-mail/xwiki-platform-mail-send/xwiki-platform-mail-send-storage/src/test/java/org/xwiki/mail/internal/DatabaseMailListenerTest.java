@@ -39,7 +39,7 @@ import org.xwiki.mail.MailState;
 import org.xwiki.mail.MailStatus;
 import org.xwiki.mail.MailStatusStore;
 import org.xwiki.mail.MailStoreException;
-import org.xwiki.test.LogRule;
+import org.xwiki.test.AllLogRule;
 import org.xwiki.test.mockito.MockitoComponentMockingRule;
 
 import static org.junit.Assert.assertEquals;
@@ -55,10 +55,7 @@ import static org.mockito.Mockito.*;
 public class DatabaseMailListenerTest
 {
     @Rule
-    public LogRule logRule = new LogRule() {{
-        record(LogRule.LogLevel.WARN);
-        recordLoggingForType(DatabaseMailListener.class);
-    }};
+    public AllLogRule logRule = new AllLogRule();
 
     @Rule
     public MockitoComponentMockingRule<DatabaseMailListener> mocker =
@@ -139,13 +136,13 @@ public class DatabaseMailListenerTest
 
         this.mocker.getComponentUnderTest().onSuccess(this.message, parameters);
 
-        assertEquals("Failed to load mail status for message id [" + this.mailId + "] from the database",
-            this.logRule.getMessage(0));
+        assertEquals("Error when looking for a previous mail status for message id [" + this.mailId + "]. However the "
+            + "mail was sent successfully. Forcing status to [sent]", this.logRule.getMessage(0));
 
-        // Verify that save didn't happen, nor the delete
-        verify(mailStatusStore, never()).save(any(MailStatus.class), anyMap());
+        // Verify that save and delete happened
+        verify(mailStatusStore).save(any(MailStatus.class), anyMap());
         MailContentStore mailContentStore = this.mocker.getInstance(MailContentStore.class, "filesystem");
-        verify(mailContentStore, never()).delete(anyString(), anyString());
+        verify(mailContentStore).delete(anyString(), anyString());
     }
 
     @Test

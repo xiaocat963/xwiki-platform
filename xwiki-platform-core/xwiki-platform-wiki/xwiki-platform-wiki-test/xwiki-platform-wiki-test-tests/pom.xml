@@ -117,7 +117,8 @@
           </execution>
         </executions>
       </plugin>
-      <!-- We set a default UI for the subwiki in the webapp -->
+      <!-- We set a default UI for the subwiki in the webapp, so that the Wiki Creation UI knows which extension to
+       install on a subwiki by default (which is something we test) -->
       <plugin>
         <groupId>com.google.code.maven-replacer-plugin</groupId>
         <artifactId>replacer</artifactId>
@@ -135,6 +136,7 @@
           <filesToInclude>webapps/xwiki/META-INF/maven/org.xwiki.platform/xwiki-platform-web/pom.xml</filesToInclude>
           <regex>false</regex>
           <commentsEnabled>false</commentsEnabled>
+          <skip>${skipTests}</skip>
           <replacements>
             <replacement>
               <token>&lt;/properties&gt;</token>

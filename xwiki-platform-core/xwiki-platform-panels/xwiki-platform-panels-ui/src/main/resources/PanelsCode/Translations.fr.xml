@@ -44,6 +44,7 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
   <content>## XWiki Translation for language fr generated from http://www.l10n.xwiki.org
+admin.panels.applications=Panel d'applications
 platform.panels.applications.ajax.csrf=La validation CSRF a échoué. Merci de recharger la page.
 platform.panels.applications.ajax.error=Enregistrement impossible.
 platform.panels.applications.ajax.noright=Vous n'êtes pas autorisés à modifier PanelsCode.ApplicationsPanelConfiguration. 

@@ -51,6 +51,7 @@ import org.xwiki.extension.Extension;
 import org.xwiki.extension.ExtensionAuthor;
 import org.xwiki.extension.ExtensionDependency;
 import org.xwiki.extension.ExtensionId;
+import org.xwiki.extension.ExtensionScm;
 import org.xwiki.extension.ResolveException;
 import org.xwiki.extension.repository.ExtensionRepository;
 import org.xwiki.extension.repository.result.IterableResult;
@@ -737,6 +738,9 @@ public class DefaultRepositoryManager implements RepositoryManager, Initializabl
         // Summary
         needSave |= update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_SUMMARY, getSummary(extension));
 
+        // Category
+        needSave |= update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_CATEGORY, extension.getCategory());
+
         // Website
         /*
          * Don't import website since most of the time we want the new page to be the extension entry point needSave |=
@@ -759,6 +763,25 @@ public class DefaultRepositoryManager implements RepositoryManager, Initializabl
             needSave = true;
         }
 
+        // SCM
+        ExtensionScm scm = extension.getScm();
+        if (scm != null) {
+            if (scm.getUrl() != null) {
+                needSave |=
+                    update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_SCMURL, scm.getUrl().toString());
+            }
+            if (scm.getConnection() != null) {
+                needSave |=
+                    update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_SCMCONNECTION, scm.getConnection()
+                        .toString());
+            }
+            if (scm.getDeveloperConnection() != null) {
+                needSave |=
+                    update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_SCMDEVCONNECTION, scm
+                        .getDeveloperConnection().toString());
+            }
+        }
+
         // Authors
         needSave |= updateAuthors(extensionObject, extension.getAuthors());
 
@@ -766,6 +789,9 @@ public class DefaultRepositoryManager implements RepositoryManager, Initializabl
         needSave |=
             update(extensionObject, XWikiRepositoryModel.PROP_EXTENSION_FEATURES,
                 new ArrayList<String>(extension.getFeatures()));
+
+        // Properties
+        needSave |= updateProperties(extensionObject, extension.getProperties());
 
         return needSave;
     }
@@ -962,6 +988,22 @@ public class DefaultRepositoryManager implements RepositoryManager, Initializabl
         needSave |= update(versionObject, XWikiRepositoryModel.PROP_VERSION_DOWNLOAD, download);
 
         return needSave;
+    }
+
+    protected boolean updateProperties(BaseObject object, Map<String, ?> map)
+    {
+        List<String> list = new ArrayList<>(map.size());
+        for (Map.Entry<String, ?> entry : map.entrySet()) {
+            list.add(entry.getKey() + '=' + entry.getValue());
+        }
+
+        if (ObjectUtils.notEqual(list, getValue(object, XWikiRepositoryModel.PROP_EXTENSION_PROPERTIES))) {
+            object.set(XWikiRepositoryModel.PROP_EXTENSION_PROPERTIES, list, this.xcontextProvider.get());
+
+            return true;
+        }
+
+        return false;
     }
 
     protected <T> T getValue(BaseObject object, String field)

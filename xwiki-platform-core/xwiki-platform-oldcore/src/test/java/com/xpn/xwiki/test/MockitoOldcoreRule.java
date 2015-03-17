@@ -59,6 +59,7 @@ import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.LocalDocumentReference;
 import org.xwiki.model.reference.WikiReference;
 import org.xwiki.observation.ObservationManager;
+import org.xwiki.query.QueryManager;
 import org.xwiki.rendering.syntax.Syntax;
 import org.xwiki.security.authorization.AuthorizationManager;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
@@ -103,8 +104,9 @@ public class MockitoOldcoreRule implements MethodRule
 
     private ContextualAuthorizationManager mockContextualAuthorizationManager;
 
-    protected Map<DocumentReference, XWikiDocument> documents =
-        new ConcurrentHashMap<DocumentReference, XWikiDocument>();
+    private QueryManager queryManager;
+
+    protected Map<DocumentReference, XWikiDocument> documents = new ConcurrentHashMap<>();
 
     private boolean notifyDocumentCreatedEvent;
 
@@ -205,7 +207,7 @@ public class MockitoOldcoreRule implements MethodRule
         // Since the oldcore module draws the Servlet Environment in its dependencies we need to ensure it's set up
         // correctly with a Servlet Context.
         if (this.componentManager.hasComponent(Environment.class)) {
-            ServletEnvironment environment = (ServletEnvironment) this.componentManager.getInstance(Environment.class);
+            ServletEnvironment environment = this.componentManager.getInstance(Environment.class);
 
             ServletContext servletContextMock = mock(ServletContext.class);
             environment.setServletContext(servletContextMock);
@@ -565,6 +567,16 @@ public class MockitoOldcoreRule implements MethodRule
                 return groupClass;
             }
         });
+
+        // Query Manager
+        // If there's already a Query Manager registered, use it instead.
+        // This allows, for example, using @ComponentList to use the real Query Manager, in integration tests.
+        if (!this.componentManager.hasComponent(QueryManager.class)) {
+            this.queryManager = getMocker().registerMockComponent(QueryManager.class);
+        } else {
+            this.queryManager = this.componentManager.getInstance(QueryManager.class);
+        }
+        when(getMockStore().getQueryManager()).thenReturn(this.queryManager);
     }
 
     protected void after() throws Exception
@@ -627,5 +639,13 @@ public class MockitoOldcoreRule implements MethodRule
     public ObservationManager getObservationManager() throws ComponentLookupException
     {
         return getMocker().getInstance(ObservationManager.class);
+    }
+
+    /**
+     * @since 7.0RC1
+     */
+    public QueryManager getQueryManager()
+    {
+        return this.queryManager;
     }
 }
